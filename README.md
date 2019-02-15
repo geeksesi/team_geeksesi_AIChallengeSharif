@@ -1,26 +1,16 @@
-<<<<<<< HEAD
-patronus
-=======
-# AI Challenge 2019 C++ Client
+# AI Challenge 2019 Python Client
 ## Setup instructions
-### Ubuntu
-It is recommended to use CLion (JetBtains)otherwise, follow the below instructions to build the client:
+
+It is recommended to use Pycharm (JetBtains)otherwise, follow the below instructions to run the client:
 
 ```cd``` to the directory you want to save and run the code
 ```
-git clone https://github.com/SharifAIChallenge/AIC19-Client-Cpp
-cd AIC19-Client-Cpp
-mkdir build
-cd build
-cmake ..
-make
-
-# To run the output issue:
-./client/client
+git clone https://github.com/SharifAIChallenge/AIC19-Client-Python
+cd AIC19-Client-Python
+python3 Controller.py
 ```
 
 
 
 
 
->>>>>>> sharif/AIC_2019
