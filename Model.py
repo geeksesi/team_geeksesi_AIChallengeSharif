@@ -229,7 +229,7 @@ class CastAbility:
 
 
 class World:
-    DEBUGGING_MODE = False
+    DEBUGGING_MODE = True
     LOG_FILE_POINTER = None
 
     def __init__(self, world=None, queue=None):
