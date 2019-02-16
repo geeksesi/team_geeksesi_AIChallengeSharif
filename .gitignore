@@ -7,3 +7,5 @@ cmake-build-release/
 
 # Manual build directory
 build/
+
+__pycache__/

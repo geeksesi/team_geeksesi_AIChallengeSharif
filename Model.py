@@ -161,7 +161,7 @@ class Hero:
         return self.id
 
     def __str__(self):
-        return 'id:' + str(self.id) + '\t name:' + self.name
+        return 'id:' + str(self.id) + '    name:' + self.name
 
 
 class Cell:
@@ -187,7 +187,7 @@ class Cell:
         return self.row * 32 + self.column
 
     def __str__(self):
-        return 'row:' + str(self.row) + '\tcolumn:' + str(self.column)
+        return 'row:' + str(self.row) + '  column:' + str(self.column)
 
 
 class Map:
@@ -207,6 +207,8 @@ class Map:
     def get_cell(self, row, column):
         if self.is_in_map(row, column):
             return self.cells[row][column]
+        elif row == -1 and column == -1:
+            return Cell(-1, -1, False, False, False, False, False)
         else:
             return None
 
@@ -226,6 +228,10 @@ class CastAbility:
         self.start_cell = start_cell
         self.end_cell = end_cell
         self.ability_name = ability_name
+
+    def __str__(self):
+        return "caster_id:{},   start_cell:{},  end_cell:{},   ability_name:{}".format(self.caster_id, self.start_cell,
+                                                                                       self.end_cell, self.ability_name)
 
 
 class World:
@@ -300,7 +306,7 @@ class World:
                     my_hero = copy.copy(first_hero)
                     my_hero.id = hero["id"]
                     my_hero.update_abilities([Ability(self._get_ability_constants(ability_name), 0)
-                                             for ability_name in my_hero.ability_names])
+                                              for ability_name in my_hero.ability_names])
                     self.my_heroes.append(my_hero)
         for hero in opp_heroes:
             for first_hero in self.heroes:
@@ -308,7 +314,7 @@ class World:
                     opp_hero = copy.copy(first_hero)
                     opp_hero.id = hero["id"]
                     opp_hero.update_abilities([Ability(self._get_ability_constants(ability_name), 0) for ability_name
-                                              in opp_hero.ability_names])
+                                               in opp_hero.ability_names])
                     self.opp_heroes.append(opp_hero)
 
     def _handle_turn_message(self, msg):
@@ -334,10 +340,13 @@ class World:
             for target in cast_ability["targetHeroIds"]:
                 targeted_list.append(target)
             cast_list.append(CastAbility(cast_ability["casterId"], targeted_list,
-                                         self.map.get_cell(cast_ability["startCell"]["row"] if "startCell" in cast_ability else -1,
-                                                           cast_ability["startCell"]["column"] if "startCell" in cast_ability else -1),
-                                         self.map.get_cell(cast_ability["endCell"]["row"] if "endCell" in cast_ability else -1,
-                                                           cast_ability["endCell"]["column"] if "endCell" in cast_ability else -1),
+                                         self.map.get_cell(
+                                             cast_ability["startCell"]["row"] if "startCell" in cast_ability else -1,
+                                             cast_ability["startCell"][
+                                                 "column"] if "startCell" in cast_ability else -1),
+                                         self.map.get_cell(
+                                             cast_ability["endCell"]["row"] if "endCell" in cast_ability else -1,
+                                             cast_ability["endCell"]["column"] if "endCell" in cast_ability else -1),
                                          cast_ability["abilityName"]))
         if my_or_opp == "my":
             self.my_cast_abilities = cast_list
@@ -526,9 +535,9 @@ class World:
         if start_cell.is_wall or start_cell == target_cell and not ability_constant.is_lobbing:
             return [start_cell]
         last_cell = None
-        rey_cells = self.get_ray_cells(start_cell, target_cell)
+        ray_cells = self.get_ray_cells(start_cell, target_cell)
         impact_cells = []
-        for cell in rey_cells:
+        for cell in ray_cells:
             if self.manhattan_distance(cell, start_cell) > ability_constant.range:
                 continue
             last_cell = cell
@@ -540,7 +549,7 @@ class World:
         return impact_cells
 
     def is_affected(self, ability_constant, cell):
-        return (self._get_opp_hero(cell) is not None and not ability_constant.type == AbilityType.DEFENSIVE) or (
+        return (self._get_opp_hero(cell) is not None and ability_constant.type == AbilityType.OFFENSIVE) or (
                 self._get_my_hero(cell) is not None and ability_constant.type == AbilityType.DEFENSIVE)
 
     @staticmethod
@@ -596,17 +605,17 @@ class World:
                         if current is not former:
                             return possible_next_cell
                         options += [possible_next_cell]
+                else:
+                    x3 = (current.row + possible_next_cell.row) / 2 + (possible_next_cell.column - current.column) / 2
+                    y3 = (possible_next_cell.column + current.column) / 2 + (possible_next_cell.row - current.row) / 2
 
-                x3 = (current.row + possible_next_cell.row) / 2 + (possible_next_cell.column - current.column) / 2
-                y3 = (possible_next_cell.column + current.column) / 2 + (possible_next_cell.row - current.row) / 2
+                    x4 = (current.row + possible_next_cell.row) / 2 - (possible_next_cell.column - current.column) / 2
+                    y4 = (possible_next_cell.column + current.column) / 2 - (possible_next_cell.row - current.row) / 2
 
-                x4 = (current.row + possible_next_cell.row) / 2 - (possible_next_cell.column - current.column) / 2
-                y4 = (possible_next_cell.column + current.column) / 2 - (possible_next_cell.row - current.row) / 2
-
-                if self._slope_equation(x1, y1, x2, y2, x3, y3) * self._slope_equation(x1, y1, x2, y2, x4, y4) < 0:
-                    if current is not former:
-                        return possible_next_cell
-                    options += [possible_next_cell]
+                    if self._slope_equation(x1, y1, x2, y2, x3, y3) * self._slope_equation(x1, y1, x2, y2, x4, y4) < 0:
+                        if current is not former:
+                            return possible_next_cell
+                        options += [possible_next_cell]
 
         def is_between(first, second, between):
             return (first.row <= between.row <= second.row or first.row >= between.row >= second.row) and \
@@ -652,7 +661,8 @@ class World:
 
         if start_cell == end_cell:
             return True
-        if end_cell == self.get_ray_cells(start_cell, end_cell)[-1]:
+        ray_cells = self.get_ray_cells(start_cell, end_cell)
+        if len(ray_cells) > 0 and end_cell == ray_cells[-1]:
             return True
         return False
 
@@ -743,7 +753,6 @@ class World:
             if target_row is None or target_column is None:
                 return None
             target_cell = self.map.get_cell(target_row, target_column)
-
         cells = self.get_impact_cells(ability_constant, start_cell, target_cell)
         affected_cells = set()
         for cell in cells:
@@ -786,7 +795,7 @@ class World:
             args += [ability.name]
 
         if cell is not None:
-            args += [cell.row, cell. column]
+            args += [cell.row, cell.column]
         elif row is not None and column is not None:
             args += [row, column]
 
@@ -820,7 +829,7 @@ class World:
     def _get_ability_type(param):
         if param == 'DODGE':
             return AbilityType.DODGE
-        if param == 'OFFENCIVE':
+        if param == 'OFFENSIVE':
             return AbilityType.OFFENSIVE
         if param == 'DEFENSIVE':
             return AbilityType.DEFENSIVE
@@ -855,4 +864,4 @@ class ServerConstants:
     CHANGE_TYPE_ADD = "a"
     CHANGE_TYPE_DEL = "d"
     CHANGE_TYPE_MOV = "m"
-    CHANGE_TYPE_ALT = "c"
+CHANGE_TYPE_ALT = "c"
