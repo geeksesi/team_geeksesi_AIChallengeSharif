@@ -12,6 +12,7 @@ class AI:
     def pick(self, world):
         print("pick")
 
+        # world.pick_hero(Model.HeroName.GUARDIAN)
         if self.which_pick == 0:
             world.pick_hero(Model.HeroName.SENTRY)
         elif self.which_pick == 1:
@@ -64,9 +65,25 @@ class AI:
             end_cell=end,
             not_pass=self.heros_cell.values(),
         )
-        for way in ways:
-            world.move_hero(hero=hero, direction=way)
-            self.heros_cell[hero.id] = hero.current_cell
+        # print(len(ways))
+        if len(ways) < 1:
+            return None
+            print("len is less: ", len(ways))
+        check_way = {
+            Model.Direction.UP: [hero.current_cell.row - 1, hero.current_cell.column],
+            Model.Direction.DOWN: [hero.current_cell.row + 1, hero.current_cell.column],
+            Model.Direction.LEFT: [hero.current_cell.row, hero.current_cell.column - 1],
+            Model.Direction.RIGHT: [hero.current_cell.row, hero.current_cell.column + 1]
+            }.get(ways[0], None)
+        if check_way is None:
+            print("WARN: ",ways[0])
+        elif hero.current_cell.is_in_objective_zone is True and world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone is False:
+            print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
+            return False
+
+        # for way in ways:
+        world.move_hero(hero=hero, direction=ways[0])
+        self.heros_cell[hero.id] = hero.current_cell
 
     def go_to_fucking_enemy(self, world, hero):
         exist_enemy = None
@@ -90,7 +107,10 @@ class AI:
                 "nothing"
             # elif world.current_turn < 15:
             else:
-                self.goal_cell["sentry"] = self.go_to_fucking_enemy(world, hero).current_cell
+                if hero.current_cell.is_in_objective_zone is False:
+                    self.goal_cell["sentry"] = self.zone_cell[5] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[3]
+                else:
+                    self.goal_cell["sentry"] = self.go_to_fucking_enemy(world, hero).current_cell
 
 
         self.move_my_hero(world, hero, self.goal_cell["sentry"])
@@ -101,9 +121,12 @@ class AI:
                 "nothing"
             # elif world.current_turn < 15:
             else:
-                true_cell = self.go_to_fucking_enemy(world, hero).current_cell
-                goal_cell = world.map.get_cell(true_cell.row - (randint(0, 1)), true_cell.column - (randint(0, 1)))
-                self.goal_cell["blaster"] =  goal_cell
+                if hero.current_cell.is_in_objective_zone is False:
+                    self.goal_cell["blaster"] = self.zone_cell[6] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[4]
+                else:
+                    true_cell = self.go_to_fucking_enemy(world, hero).current_cell
+                    goal_cell = world.map.get_cell(true_cell.row - (randint(0, 1)), true_cell.column - (randint(0, 1)))
+                    self.goal_cell["blaster"] =  goal_cell
 
         self.move_my_hero(world, hero, self.goal_cell["blaster"])
 
@@ -125,7 +148,9 @@ class AI:
                             this_manhattan = world.manhattan_distance(hero.current_cell, team_hero.current_cell)
                             if need_manhattan > this_manhattan | (need_manhattan - this_manhattan) < 3:
                                 need_heal = team_hero
-                if need_heal is None:
+                if hero.current_cell.is_in_objective_zone is False:
+                    self.goal_cell["healer"] = self.zone_cell[0] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[1]
+                elif need_heal is None:
                     self.goal_cell["healer"] = hero.current_cell
                 else:
                     self.goal_cell["healer"] = need_heal.current_cell
@@ -136,88 +161,50 @@ class AI:
 
 ### *** ## ** # * ACTION * # ** ## *** ###
 
-    def sentry_action(self, world, hero):
+    def attak_to_fucking_enemy(self, world, hero, ability):
         for opp_hero in world.opp_heroes:
-            if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
+            if hero.get_ability(ability).is_ready() is not True:
+                break
+            if opp_hero.current_cell.row == -1 | opp_hero.current_cell.column == -1:
+                continue
+            targets = world.get_ability_targets(
+                ability_name=ability,
+                start_cell=hero.current_cell,
+                target_cell=opp_hero.current_cell,
+            )
+            exist_target = None
+            for target in targets:
+                if (target.current_cell.row != -1 or target.current_cell.column != -1):
+                    if exist_target is None:
+                        exist_target = target
+                    elif exist_target.current_hp > target.current_hp:
+                        exist_target = target
+            if exist_target is None:
+                return None
+            world.cast_ability(
+                hero=hero,
+                ability_name=ability,
+                cell=exist_target.current_cell,
+            )
+            return True
+
+
+    def sentry_action(self, world, hero):
+        # for opp_hero in world.opp_heroes:
+            # if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
             #    if opp_hero.name ==  Model.HeroName.SENTRY | opp_hero.name ==  Model.HeroName.BLASTER:
                 # add DODGE to hero...
+                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_RAY)
+                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_ATTACK)
 
-                if hero.get_ability(Model.AbilityName.SENTRY_RAY).is_ready() is True:
-                    targets = world.get_ability_targets(
-                        ability_name=Model.AbilityName.SENTRY_RAY,
-                        start_cell=hero.current_cell,
-                        target_cell=opp_hero.current_cell,
-                    )
-                    for target in targets:
-                        if (
-                            target.current_cell.row != -1
-                            or target.current_cell.column != -1
-                        ):
-                            world.cast_ability(
-                                hero=hero,
-                                ability_name=Model.AbilityName.SENTRY_RAY,
-                                cell=target.current_cell,
-                            )
-                            print("sentry doed")
-                if hero.get_ability(Model.AbilityName.SENTRY_ATTACK).is_ready() is True:
-                    targets = world.get_ability_targets(
-                        ability_name=Model.AbilityName.SENTRY_ATTACK,
-                        start_cell=hero.current_cell,
-                        target_cell=opp_hero.current_cell,
-                    )
-                    for target in targets:
-                        if (
-                            target.current_cell.row != -1
-                            or target.current_cell.column != -1
-                        ):
-                            world.cast_ability(
-                                hero=hero,
-                                ability_name=Model.AbilityName.SENTRY_ATTACK,
-                                cell=target.current_cell,
-                            )
-                            print("sentry doed")
-            # if opp_hero == world.get_ability_targets(ability_name=Model.AbilityName.SENTRY_RAY, start_cell=hero.current_cell, target_cell=opp_hero.current_cell):
 
     def blaster_action(self, world, hero):
         for opp_hero in world.opp_heroes:
             if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
-                if hero.get_ability(Model.AbilityName.BLASTER_BOMB).is_ready() is True:
-                    targets = world.get_ability_targets(
-                        ability_name=Model.AbilityName.BLASTER_BOMB,
-                        start_cell=hero.current_cell,
-                        target_cell=opp_hero.current_cell,
-                    )
-                    for target in targets:
-                        if (
-                            target.current_cell.row != -1
-                            or target.current_cell.column != -1
-                        ):
-                            world.cast_ability(
-                                hero=hero,
-                                ability_name=Model.AbilityName.BLASTER_BOMB,
-                                cell=target.current_cell,
-                            )
-                            print("blaster super doed")
-                if (
-                    hero.get_ability(Model.AbilityName.BLASTER_ATTACK).is_ready()
-                    is True
-                ):
-                    targets = world.get_ability_targets(
-                        ability_name=Model.AbilityName.BLASTER_ATTACK,
-                        start_cell=hero.current_cell,
-                        target_cell=opp_hero.current_cell,
-                    )
-                    for target in targets:
-                        if (
-                            target.current_cell.row != -1
-                            or target.current_cell.column != -1
-                        ):
-                            world.cast_ability(
-                                hero=hero,
-                                ability_name=Model.AbilityName.BLASTER_ATTACK,
-                                cell=target.current_cell,
-                            )
-                            print("blaster doed")
+
+                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_BOMB)
+                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_ATTACK)
+               
 
     def healer_action(self, world, hero):
         for other_hero in world.my_heroes:
@@ -238,25 +225,8 @@ class AI:
                                 cell=target.current_cell,
                             )
                             print("healer heled")
-        for opp_hero in world.opp_heroes:
-            if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
-                if hero.get_ability(Model.AbilityName.HEALER_ATTACK).is_ready() is True:
-                    targets = world.get_ability_targets(
-                        ability_name=Model.AbilityName.HEALER_ATTACK,
-                        start_cell=hero.current_cell,
-                        target_cell=opp_hero.current_cell,
-                    )
-                    for target in targets:
-                        if (
-                            target.current_cell.row != -1
-                            or target.current_cell.column != -1
-                        ):
-                            world.cast_ability(
-                                hero=hero,
-                                ability_name=Model.AbilityName.HEALER_ATTACK,
-                                cell=target.current_cell,
-                            )
-                            print("healer attacked")
+
+                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.HEALER_ATTACK)
 
 
 
