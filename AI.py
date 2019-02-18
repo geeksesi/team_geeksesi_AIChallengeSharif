@@ -5,24 +5,27 @@ from random import randint
 class AI:
     def preprocess(self, world):
         print("preprocess")
-        self.which_pick = 0
+        self.which_pick = 2
         self.set_zone(world)
         self.set_goal_cell(world)
 
     def pick(self, world):
-        print("pick")
+        print("LOG: PICKING...")
 
         if self.which_pick == 0:
             world.pick_hero(Model.HeroName.SENTRY)
+            print(" Picked: Sentry")
         elif self.which_pick == 1:
             world.pick_hero(Model.HeroName.HEALER)
+            print(" Picked: Healer")
         else:
             world.pick_hero(Model.HeroName.BLASTER)
+            print(" Picked: Blaster")
 
         self.which_pick += 1
 
     def move(self, world):
-        # print ("AP : ",world.ap)
+        # print ("AP: ",world.ap)
         # self.visible_enemy
         self.heros_cell = {}
         for hero in world.my_heroes:
@@ -41,8 +44,7 @@ class AI:
                 self.healer_move(world, hero)
 
     def action(self, world):
-        print(world.current_turn)
-        print("action")
+        print(" -> Action => Current Turn is #", world.current_turn)
         for hero in world.my_heroes:
             # print()
             if hero.name == Model.HeroName.SENTRY and hero.respawn_time == 0:
@@ -52,7 +54,7 @@ class AI:
             elif hero.name == Model.HeroName.HEALER and hero.respawn_time == 0:
                 self.healer_action(world, hero)
 
-        print("my_score: ", world.my_score)
+        print("♥ SCORE: ", world.my_score)
 
 
 ### *** ## ** # * MOVE * # ** ## *** ###
@@ -88,7 +90,6 @@ class AI:
         if world.move_phase_num == 1 :
             if world.current_turn < 10:
                 "nothing"
-            # elif world.current_turn < 15:
             else:
                 self.goal_cell["sentry"] = self.go_to_fucking_enemy(world, hero).current_cell
 
@@ -197,7 +198,7 @@ class AI:
                                 ability_name=Model.AbilityName.BLASTER_BOMB,
                                 cell=target.current_cell,
                             )
-                            print("blaster super doed")
+                            print("Blaster Bombed!")
                 if (
                     hero.get_ability(Model.AbilityName.BLASTER_ATTACK).is_ready()
                     is True
@@ -217,7 +218,7 @@ class AI:
                                 ability_name=Model.AbilityName.BLASTER_ATTACK,
                                 cell=target.current_cell,
                             )
-                            print("blaster doed")
+                            print("Blaster Attacked!")
 
     def healer_action(self, world, hero):
         for other_hero in world.my_heroes:
@@ -237,7 +238,7 @@ class AI:
                                 ability_name=Model.AbilityName.HEALER_HEAL,
                                 cell=target.current_cell,
                             )
-                            print("healer heled")
+                            print("Healer Healed!")
         for opp_hero in world.opp_heroes:
             if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
                 if hero.get_ability(Model.AbilityName.HEALER_ATTACK).is_ready() is True:
@@ -256,7 +257,7 @@ class AI:
                                 ability_name=Model.AbilityName.HEALER_ATTACK,
                                 cell=target.current_cell,
                             )
-                            print("healer attacked")
+                            print("Healer Attacked!")
 
 
 
