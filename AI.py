@@ -12,13 +12,14 @@ class AI:
     def pick(self, world):
         print("pick")
 
-        # world.pick_hero(Model.HeroName.GUARDIAN)
-        if self.which_pick == 0:
-            world.pick_hero(Model.HeroName.SENTRY)
-        elif self.which_pick == 1:
-            world.pick_hero(Model.HeroName.HEALER)
-        else:
-            world.pick_hero(Model.HeroName.BLASTER)
+        # if self.which_pick == 0:
+            # world.pick_hero(Model.HeroName.GUARDIAN)
+            # world.pick_hero(Model.HeroName.SENTRY)
+        # elif self.which_pick == 1:
+            # world.pick_hero(Model.HeroName.GUARDIAN)
+            # world.pick_hero(Model.HeroName.HEALER)
+        # else:
+        world.pick_hero(Model.HeroName.BLASTER)
 
         self.which_pick += 1
 
@@ -34,24 +35,30 @@ class AI:
             if hero.respawn_time != 0:
                 continue
             # print(hero.name)
-            if hero.name == Model.HeroName.SENTRY:
-                self.sentry_move(world, hero)
+            # if hero.name == Model.HeroName.SENTRY:
+            #     self.sentry_move(world, hero)
+            # if hero.name == Model.HeroName.GUARDIAN:
+            #     self.guardian_num = 0
+            #     self.guardian_move(world, hero)
             elif hero.name == Model.HeroName.BLASTER:
+                self.blaster_num = 0
                 self.blaster_move(world, hero)
-            elif hero.name == Model.HeroName.HEALER:
-                self.healer_move(world, hero)
+            # elif hero.name == Model.HeroName.HEALER:
+            #     self.healer_move(world, hero)
 
     def action(self, world):
         print(world.current_turn)
         print("action")
         for hero in world.my_heroes:
             # print()
-            if hero.name == Model.HeroName.SENTRY and hero.respawn_time == 0:
-                self.sentry_action(world, hero)
+            # if hero.name == Model.HeroName.SENTRY and hero.respawn_time == 0:
+            #     self.sentry_action(world, hero)
+            if hero.name == Model.HeroName.GUARDIAN and hero.respawn_time == 0:
+                self.guardian_action(world, hero)
             elif hero.name == Model.HeroName.BLASTER and hero.respawn_time == 0:
                 self.blaster_action(world, hero)
-            elif hero.name == Model.HeroName.HEALER and hero.respawn_time == 0:
-                self.healer_action(world, hero)
+            # elif hero.name == Model.HeroName.HEALER and hero.respawn_time == 0:
+            #     self.healer_action(world, hero)
 
         print("my_score: ", world.my_score)
 
@@ -60,15 +67,21 @@ class AI:
 
 
     def move_my_hero(self, world, hero, end):
+        
+        not_pass = self.heros_cell
+        if hero.id in not_pass:
+            del not_pass[hero.id]
+
+
         ways = world.get_path_move_directions(
             start_cell=hero.current_cell,
             end_cell=end,
-            not_pass=self.heros_cell.values(),
+            not_pass=not_pass.values(),
         )
-        # print(len(ways))
+        
         if len(ways) < 1:
+            # print("len is less: ", len(ways))
             return None
-            print("len is less: ", len(ways))
         check_way = {
             Model.Direction.UP: [hero.current_cell.row - 1, hero.current_cell.column],
             Model.Direction.DOWN: [hero.current_cell.row + 1, hero.current_cell.column],
@@ -78,7 +91,7 @@ class AI:
         if check_way is None:
             print("WARN: ",ways[0])
         elif hero.current_cell.is_in_objective_zone is True and world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone is False:
-            print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
+            # print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
             return False
 
         # for way in ways:
@@ -101,6 +114,21 @@ class AI:
         else:
             return exist_enemy
 
+    def guardian_move(self, world, hero):
+        self.guardian_num = 0 if self.guardian_num == 1 else 1 
+        if world.move_phase_num == 1 :
+            if world.current_turn < 10:
+                "nothing"
+            # elif world.current_turn < 15:
+            else:
+                if hero.current_cell.is_in_objective_zone is False:
+                    self.goal_cell["guardian"][self.guardian_num] = self.zone_cell[1] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[1]) is None) else self.zone_cell[9]
+                else:
+                    self.goal_cell["guardian"][self.guardian_num] = self.go_to_fucking_enemy(world, hero).current_cell
+
+        self.move_my_hero(world, hero, self.goal_cell["guardian"][self.guardian_num])
+
+
     def sentry_move(self, world, hero):
         if world.move_phase_num == 1 :
             if world.current_turn < 10:
@@ -108,7 +136,7 @@ class AI:
             # elif world.current_turn < 15:
             else:
                 if hero.current_cell.is_in_objective_zone is False:
-                    self.goal_cell["sentry"] = self.zone_cell[5] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[3]
+                    self.goal_cell["sentry"] = self.zone_cell[2] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[2]) is None) else self.zone_cell[8]
                 else:
                     self.goal_cell["sentry"] = self.go_to_fucking_enemy(world, hero).current_cell
 
@@ -116,19 +144,21 @@ class AI:
         self.move_my_hero(world, hero, self.goal_cell["sentry"])
 
     def blaster_move(self, world, hero):
+        self.blaster_num = 0 if self.blaster_num == 3 else (self.blaster_num + 1) 
         if world.move_phase_num == 1 :
             if world.current_turn < 10:
                 "nothing"
             # elif world.current_turn < 15:
             else:
                 if hero.current_cell.is_in_objective_zone is False:
-                    self.goal_cell["blaster"] = self.zone_cell[6] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[4]
+                    self.goal_cell["blaster"][self.blaster_num] = self.zone_cell[3] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[3]) is None) else self.zone_cell[7]
                 else:
                     true_cell = self.go_to_fucking_enemy(world, hero).current_cell
-                    goal_cell = world.map.get_cell(true_cell.row - (randint(0, 1)), true_cell.column - (randint(0, 1)))
-                    self.goal_cell["blaster"] =  goal_cell
+                    goal_cell = world.map.get_cell(true_cell.row - (randint(0, 2)), true_cell.column - (randint(0, 2)))
+                    self.goal_cell["blaster"][self.blaster_num] =  goal_cell
 
-        self.move_my_hero(world, hero, self.goal_cell["blaster"])
+
+        self.move_my_hero(world, hero, self.goal_cell["blaster"][self.blaster_num])
 
 
     def healer_move(self, world, hero):
@@ -149,7 +179,7 @@ class AI:
                             if need_manhattan > this_manhattan | (need_manhattan - this_manhattan) < 3:
                                 need_heal = team_hero
                 if hero.current_cell.is_in_objective_zone is False:
-                    self.goal_cell["healer"] = self.zone_cell[0] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[1]
+                    self.goal_cell["healer"] = self.zone_cell[0] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.zone_cell[0]) is None) else self.zone_cell[10]
                 elif need_heal is None:
                     self.goal_cell["healer"] = hero.current_cell
                 else:
@@ -189,21 +219,21 @@ class AI:
             return True
 
 
+    def guardian_action(self, world, hero):
+
+        self.attak_to_fucking_enemy(world, hero, Model.AbilityName.GUARDIAN_ATTACK)
+        # self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_ATTACK)
+
     def sentry_action(self, world, hero):
-        # for opp_hero in world.opp_heroes:
-            # if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
-            #    if opp_hero.name ==  Model.HeroName.SENTRY | opp_hero.name ==  Model.HeroName.BLASTER:
-                # add DODGE to hero...
-                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_RAY)
-                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_ATTACK)
+
+        self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_RAY)
+        self.attak_to_fucking_enemy(world, hero, Model.AbilityName.SENTRY_ATTACK)
 
 
     def blaster_action(self, world, hero):
-        for opp_hero in world.opp_heroes:
-            if opp_hero.current_cell.row != -1 or opp_hero.current_cell.column != -1:
 
-                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_BOMB)
-                self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_ATTACK)
+        self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_BOMB)
+        self.attak_to_fucking_enemy(world, hero, Model.AbilityName.BLASTER_ATTACK)
                
 
     def healer_action(self, world, hero):
@@ -265,6 +295,14 @@ class AI:
         self.goal_cell = {
             "healer": self.zone_cell[0],
             "sentry": self.zone_cell[4],
-            "blaster": self.zone_cell[(self.zone_size["row"] + 3)],
-            "blaster2": self.zone_cell[(self.zone_size["row"] + 1)],
+            "blaster":[    
+                self.zone_cell[(self.zone_size["row"] + 2)],
+                self.zone_cell[(self.zone_size["row"] + 1)],
+                self.zone_cell[0],
+                self.zone_cell[3],
+            ],
+            "guardian": [
+                self.zone_cell[0],
+                self.zone_cell[4],
+            ] 
         }
