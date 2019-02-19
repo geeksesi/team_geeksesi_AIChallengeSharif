@@ -3,38 +3,37 @@ class guardian:
     def __init__(self, Model, fixed, world):
         self.Model = Model
         self.fixed = fixed
-        self.world = world
         
 
-    def move(self, hero):
+    def move(self, world, hero):
         print ("write here")
         self.guardian_num = 0 if self.guardian_num == 1 else 1 
-        if self.world.move_phase_num == 1 :
-            if self.world.current_turn < 10:
+        if world.move_phase_num == 1 :
+            if world.current_turn < 10:
                 "nothing"
-            # elif self.world.current_turn < 15:
+            # elif world.current_turn < 15:
             else:
                 if hero.current_cell.is_in_objective_zone is False:
-                    self.fixed.goal_cell["guardian"][self.fixed.guardian_num] = self.fixed.zone_cell[1] if (self.world.get_hero_by_cell(allegiance=self.world.my_heroes,cell=self.fixed.zone_cell[1]) is None) else self.fixed.zone_cell[9]
+                    self.fixed.goal_cell["guardian"][self.fixed.guardian_num] = self.fixed.zone_cell[1] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.fixed.zone_cell[1]) is None) else self.fixed.zone_cell[9]
                 else:
                     self.fixed.goal_cell["guardian"][self.fixed.guardian_num] = self.fixed.go_to_fucking_enemy(hero).current_cell
 
-        self.fixed.move_my_hero(self.world, hero, self.fixed.goal_cell["guardian"][self.guardian_num])
+        self.fixed.move_my_hero(world, hero, self.fixed.goal_cell["guardian"][self.guardian_num])
 
     
     
-    def action(self, hero):
+    def action(self, world, hero):
         print ("write here")
 
     
-    def move_my_hero(self, hero, end):
+    def move_my_hero(self, world, hero, end):
         
         not_pass = self.fixed.heros_cell
         if hero.id in not_pass:
             del not_pass[hero.id]
 
 
-        ways = self.world.get_path_move_directions(
+        ways = world.get_path_move_directions(
             start_cell=hero.current_cell,
             end_cell=end,
             not_pass=not_pass.values(),
@@ -51,23 +50,23 @@ class guardian:
             }.get(ways[0], None)
         if check_way is None:
             print("WARN: ",ways[0])
-        elif hero.current_cell.is_in_objective_zone is True and self.world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone is False:
-            # print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",self.world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
+        elif hero.current_cell.is_in_objective_zone is True and world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone is False:
+            # print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
             return False
 
         # for way in ways:
-        self.world.move_hero(hero=hero, direction=ways[0])
+        world.move_hero(hero=hero, direction=ways[0])
         self.fixed.heros_cell[hero.id] = hero.current_cell
 
-    def go_to_fucking_enemy(self, hero):
+    def go_to_fucking_enemy(self, world, hero):
         exist_enemy = None
-        for e_hero in self.world.opp_heroes:
+        for e_hero in world.opp_heroes:
             if e_hero.current_cell.is_in_objective_zone is True:
                 if exist_enemy is None:
                     exist_enemy = e_hero
                     continue
-                exist_manhattan = self.world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
-                this_manhattan = self.world.manhattan_distance(hero.current_cell, e_hero.current_cell)
+                exist_manhattan = world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
+                this_manhattan = world.manhattan_distance(hero.current_cell, e_hero.current_cell)
                 if exist_enemy.current_hp > e_hero.current_hp:
                     if this_manhattan <= exist_manhattan | (exist_manhattan - this_manhattan) < 5:
                         exist_enemy = e_hero
