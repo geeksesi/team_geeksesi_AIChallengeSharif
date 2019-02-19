@@ -1,10 +1,18 @@
 import Model
 from random import randint
-
+from heroes import sentry, healer, guardian, blaster
+from sentry import sentry
+from blaster import blaster
+from guardian import guardian 
+from healer import healer 
 
 class AI:
     def preprocess(self, world):
         print("preprocess")
+        self.sentry = sentry()
+        self.blaster = blaster()
+        self.healer = healer()
+        self.guardian = guardian()
         self.which_pick = 0
         self.set_zone(world)
         self.set_goal_cell(world)
@@ -28,6 +36,8 @@ class AI:
         # self.visible_enemy
         self.heros_cell = {}
         for hero in world.my_heroes:
+            if hero.respawn_time != 0:
+                continue
             self.heros_cell[hero.id] = hero.current_cell
 
         # i = 0
@@ -35,30 +45,31 @@ class AI:
             if hero.respawn_time != 0:
                 continue
             # print(hero.name)
-            # if hero.name == Model.HeroName.SENTRY:
-            #     self.sentry_move(world, hero)
-            # if hero.name == Model.HeroName.GUARDIAN:
-            #     self.guardian_num = 0
-            #     self.guardian_move(world, hero)
+            if hero.name == Model.HeroName.SENTRY:
+                self.sentry.move(world, hero)
             elif hero.name == Model.HeroName.BLASTER:
-                self.blaster_num = 0
-                self.blaster_move(world, hero)
-            # elif hero.name == Model.HeroName.HEALER:
-            #     self.healer_move(world, hero)
+                self.blaster.move(world, hero)
+            elif hero.name == Model.HeroName.GUARDIAN:
+                self.guardian.move(world, hero)
+            elif hero.name == Model.HeroName.HEALER:
+                self.healer.move(world, hero)
 
     def action(self, world):
         print(world.current_turn)
         print("action")
         for hero in world.my_heroes:
-            # print()
-            # if hero.name == Model.HeroName.SENTRY and hero.respawn_time == 0:
-            #     self.sentry_action(world, hero)
-            if hero.name == Model.HeroName.GUARDIAN and hero.respawn_time == 0:
-                self.guardian_action(world, hero)
-            elif hero.name == Model.HeroName.BLASTER and hero.respawn_time == 0:
-                self.blaster_action(world, hero)
-            # elif hero.name == Model.HeroName.HEALER and hero.respawn_time == 0:
-            #     self.healer_action(world, hero)
+            if hero.respawn_time != 0:
+                continue
+            # print(hero.name)
+            if hero.name == Model.HeroName.SENTRY:
+                self.sentry.action(world, hero)
+            elif hero.name == Model.HeroName.BLASTER:
+                self.blaster.action(world, hero)
+            elif hero.name == Model.HeroName.GUARDIAN:
+                self.guardian.action(world, hero)
+            elif hero.name == Model.HeroName.HEALER:
+                self.healer.action(world, hero)
+
 
         print("my_score: ", world.my_score)
 
@@ -104,11 +115,14 @@ class AI:
             if e_hero.current_cell.is_in_objective_zone is True:
                 if exist_enemy is None:
                     exist_enemy = e_hero
-                elif exist_enemy.current_hp > e_hero.current_hp:
-                    exist_manhattan = world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
-                    this_manhattan = world.manhattan_distance(hero.current_cell, e_hero.current_cell)
+                    continue
+                exist_manhattan = world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
+                this_manhattan = world.manhattan_distance(hero.current_cell, e_hero.current_cell)
+                if exist_enemy.current_hp > e_hero.current_hp:
                     if this_manhattan <= exist_manhattan | (exist_manhattan - this_manhattan) < 5:
                         exist_enemy = e_hero
+                elif this_manhattan <= exist_manhattan:
+                    exist_enemy = e_hero
         if exist_enemy is None:
             return hero
         else:
@@ -190,6 +204,22 @@ class AI:
 
 
 ### *** ## ** # * ACTION * # ** ## *** ###
+
+    def enemy_cooldown(self, world):
+        for casted in world.opp_cast_abilities:
+            
+
+    # like fear the walkin dead :D
+    def fear_the_fucking_enemy(self, world, hero, ability):
+        # fast move for hero (with action hero can recive to zone object faster)
+
+        # dodge when enemy ability is ready and attack after dodge (it's should not do more than 2/4 hero  in 1 action )
+        for opp_hero in world.opp_heroes:
+            if opp_hero.current_cell.row == -1:
+                continue
+            if opp_hero.name == Model.HeroName.HEALER | opp_hero.respawn_time > 0:
+                continue
+            
 
     def attak_to_fucking_enemy(self, world, hero, ability):
         for opp_hero in world.opp_heroes:
