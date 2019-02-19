@@ -2,6 +2,13 @@
 class fixed:
 
     def __init__(self, randint, world, Model):
+        self.zone_cell = []
+        self.set_zone(world)
+        self.guardian_num = 0
+        self.randint = randint
+        self.heros_cell = {}
+        self.Model = Model
+        self.e_cooldown = {}
         self.goal_cell = {
             "healer": self.zone_cell[0],
             "sentry": self.zone_cell[4],
@@ -16,11 +23,6 @@ class fixed:
                 self.zone_cell[4],
             ] 
         }
-        self.set_zone(world)
-        self.guardian_num = 0
-        self.randint = randint
-        self.heros_cell = {}
-        self.Model = Model
     def move_my_hero(self, world, hero, end):
         
         not_pass = self.heros_cell
@@ -74,10 +76,26 @@ class fixed:
 
 ### *** ## ** # * ACTION * # ** ## *** ###
 
+    def set_enemy_ability(self, world):
+        self.e_cooldown = {}
+        for opp_hero in world.opp_heroes:
+            for e_ability in opp_hero.abilities:
+                self.e_cooldown[opp_hero.id][e_ability.name] += 0
+        
+    def turn_enemy_ability(self, world):
+        for opp_hero in world.opp_heroes:
+            for e_ability in opp_hero.abilities:
+                if self.e_cooldown[opp_hero.id][e_ability.name] != 0:
+                    self.e_cooldown[opp_hero.id][e_ability.name] -= 1
+                else: 
+                    continue
 
-    # def enemy_cooldown(self, world):
-    #     for casted in world.opp_cast_abilities:
-            
+    def enemy_cooldown(self, world):
+        for casted in world.opp_cast_abilities:
+            if world.get_hero(casted.caster_id).name is None:
+                continue
+            self.e_cooldown[casted.caster_id][casted.ability_name] +=  world.get_hero(casted.caster_id).get_ability(casted.ability_name).cooldown
+
 
     # like fear the walkin dead :D
     def fear_the_fucking_enemy(self, world, hero, ability):
@@ -116,6 +134,7 @@ class fixed:
                 ability_name=ability,
                 cell=exist_target.current_cell,
             )
+            print("{0} doed {1}".format(hero.name, ability))
             return True
 
 

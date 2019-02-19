@@ -47,13 +47,13 @@ class AI:
                 continue
             # print(hero.name)
             if hero.name == Model.HeroName.SENTRY:
-                self.sentry.move(hero)
+                self.sentry.move(world, hero)
             elif hero.name == Model.HeroName.BLASTER:
-                self.blaster.move(hero)
+                self.blaster.move(world, hero)
             elif hero.name == Model.HeroName.GUARDIAN:
-                self.guardian.move(hero)
+                self.guardian.move(world, hero)
             elif hero.name == Model.HeroName.HEALER:
-                self.healer.move(hero)
+                self.healer.move(world, hero)
 
     def action(self, world):
         print(world.current_turn)
@@ -63,13 +63,13 @@ class AI:
                 continue
             # print(hero.name)
             if hero.name == Model.HeroName.SENTRY:
-                self.sentry.action(hero)
+                self.sentry.action(world, hero)
             elif hero.name == Model.HeroName.BLASTER:
-                self.blaster.action(hero)
+                self.blaster.action(world, hero)
             elif hero.name == Model.HeroName.GUARDIAN:
-                self.guardian.action(hero)
+                self.guardian.action(world, hero)
             elif hero.name == Model.HeroName.HEALER:
-                self.healer.action(hero)
+                self.healer.action(world, hero)
 
 
         print("my_score: ", world.my_score)
