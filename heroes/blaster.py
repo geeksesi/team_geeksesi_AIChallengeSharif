@@ -13,25 +13,21 @@ class blaster:
             self.fixed.zone_cell[2],
             self.fixed.zone_cell[self.fixed.zone_size["row"]]
         ]
-
+        blasters_id = {}
     def move(self, world, hero):
         self.blaster_num = 0 if self.blaster_num == 3 else (self.blaster_num + 1) 
-        if world.move_phase_num == 1 :
-            # print("move phase number ~>",world.move_phase_num)
-            if world.current_turn < 10:
-                "nothing"
-            # elif world.current_turn < 15:
-            else:
-                if hero.current_cell.is_in_objective_zone is False:
-                    # self.fixed.goal_cell["blaster"][self.blaster_num] = self.fixed.zone_cell[3] if (world.get_hero_by_cell(allegiance=world.my_heroes,cell=self.fixed.zone_cell[3]) is None) else self.fixed.zone_cell[7]
-                    self.fixed.goal_cell["blaster"][self.blaster_num] = self.respawn_goal[self.blaster_num]
-                else:
-                    true_cell = self.fixed.go_to_fucking_enemy(world, hero).current_cell
-                    goal_cell = world.map.get_cell(true_cell.row - (self.fixed.randint(0, 2)), true_cell.column - (self.fixed.randint(0, 2)))
-                    self.fixed.goal_cell["blaster"][self.blaster_num] =  goal_cell
-
-
-        self.fixed.move_my_hero(world, hero, self.fixed.goal_cell["blaster"][self.blaster_num])
+        opp_hero = self.find_fucking_enemy_for_attack(world, hero)
+        if opp_hero is None:
+            self.fixed.move_my_hero(world, hero, self.fixed.zone_cell[5 + int(self.blaster_num * 2)])
+            return True
+        if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > 4:
+            self.fixed.move_my_hero(world, hero, opp_hero.current_cell)
+            return True
+        elif hero.current_cell.is_in_objective_zone is False:
+            self.fixed.move_my_hero(world, hero, opp_hero.current_cell)
+            return True
+        else:
+            return None
 
 
     def action(self, world, hero):
@@ -39,3 +35,37 @@ class blaster:
         self.fixed.attak_to_fucking_enemy(world, hero, self.Model.AbilityName.BLASTER_BOMB)
         self.fixed.attak_to_fucking_enemy(world, hero, self.Model.AbilityName.BLASTER_ATTACK)
 
+    # def move(self, world, hero, phase):
+    #     if phase == "move":
+    #         opp_hero = self.find_fucking_enemy_for_attack(world, hero)
+    #         if opp_hero is None:
+    #             self.fixed.move_my_hero(world, hero, self.fixed.zone_cell[15])
+    #             return True
+    #         if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > 4:
+    #             self.fixed.move_my_hero(world, hero, opp_hero.current_cell)
+    #             return True
+    #         elif hero.current_cell.is_in_objective_zone is False:
+    #             self.fixed.move_my_hero(world, hero, opp_hero.current_cell)
+    #             return True
+    #         else:
+    #             return None
+    #     elif phase == "action":
+    #         self.fixed.fear_the_fucking_enemy(world, hero)
+
+
+    def find_fucking_enemy_for_attack(self, world, hero):
+        ret = None
+        for opp_hero in world.opp_heroes:
+            if opp_hero.current_cell.row == -1:
+                continue
+            if opp_hero.current_cell.is_in_objective_zone is False:
+                continue
+            if ret is None:
+                ret = opp_hero
+                continue
+            if ret.current_hp < opp_hero.current_hp:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > world.manhattan_distance(hero.current_cell, ret.current_cell):
+                continue
+            ret = opp_hero
+        return ret
