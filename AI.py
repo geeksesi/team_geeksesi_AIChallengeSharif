@@ -22,14 +22,14 @@ class AI:
     def pick(self, world):
         print("pick")
 
-        if self.which_pick == 0:
+        # if self.which_pick == 0:
             # world.pick_hero(Model.HeroName.GUARDIAN)
-            world.pick_hero(Model.HeroName.SENTRY)
+            # world.pick_hero(Model.HeroName.SENTRY)
         # elif self.which_pick == 1:
             # world.pick_hero(Model.HeroName.GUARDIAN)
             # world.pick_hero(Model.HeroName.HEALER)
-        else:
-            world.pick_hero(Model.HeroName.BLASTER)
+        # else:
+        world.pick_hero(Model.HeroName.BLASTER)
 
         self.which_pick += 1
 
@@ -72,7 +72,7 @@ class AI:
 
 
         print("My Score ~>", world.my_score)
-        print("Enemy Score ~>", world.opp_score)
+        # print("Enemy Score ~>", world.opp_score)
 
 
 
