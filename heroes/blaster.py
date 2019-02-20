@@ -17,7 +17,7 @@ class blaster:
     def move(self, world, hero):
         self.blaster_num = 0 if self.blaster_num == 3 else (self.blaster_num + 1) 
         if world.move_phase_num == 1 :
-            print("move phase number ~>",world.move_phase_num)
+            # print("move phase number ~>",world.move_phase_num)
             if world.current_turn < 10:
                 "nothing"
             # elif world.current_turn < 15:
@@ -39,4 +39,3 @@ class blaster:
         self.fixed.attak_to_fucking_enemy(world, hero, self.Model.AbilityName.BLASTER_BOMB)
         self.fixed.attak_to_fucking_enemy(world, hero, self.Model.AbilityName.BLASTER_ATTACK)
 
-    

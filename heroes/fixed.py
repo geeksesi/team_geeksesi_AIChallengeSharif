@@ -48,6 +48,7 @@ class fixed:
             }.get(ways[0], None)
         if check_way is None:
             print("WARN: ",ways[0])
+            return None
         elif hero.current_cell.is_in_objective_zone is True and world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone is False:
             # print("hero: ",hero.current_cell.is_in_objective_zone, " | next :",world.map.get_cell(check_way[0], check_way[1]).is_in_objective_zone )
             return False
@@ -71,6 +72,8 @@ class fixed:
                 elif this_manhattan <= exist_manhattan:
                     exist_enemy = e_hero
         if exist_enemy is None:
+            return hero
+        elif world.manhattan_distance(hero.current_cell, exist_enemy.current_cell) < 5:
             return hero
         else:
             return exist_enemy
