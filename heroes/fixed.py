@@ -103,19 +103,31 @@ class fixed:
                     two = world.map.get_cell((row + 1), (column - 1)) 
 
 
-        three = world.map.get_cell((row), (column - 2)) 
+        three = world.map.get_cell((row), (column - 4)) 
         if three.is_in_objective_zone is False:
-            three = world.map.get_cell((row - 2), (column)) 
+            three = world.map.get_cell((row), (column - 3)) 
             if three.is_in_objective_zone is False:
                 three = world.map.get_cell((row), (column - 2)) 
                 if three.is_in_objective_zone is False:
-                    three = world.map.get_cell((row - 1), (column)) 
+                    three = world.map.get_cell((row), (column - 1)) 
                     if three.is_in_objective_zone is False:
-                        three = world.map.get_cell((row + 1), (column)) 
+                        three = world.map.get_cell((row), (column + 1)) 
                         if three.is_in_objective_zone is False:
-                            three = world.map.get_cell((row), (column + 1)) 
+                            three = world.map.get_cell((row), (column + 2)) 
 
-        ret = [one, two, three]
+        four = world.map.get_cell((row - 4), (column)) 
+        if four.is_in_objective_zone is False:
+            four = world.map.get_cell((row- 3), (column)) 
+            if four.is_in_objective_zone is False:
+                four = world.map.get_cell((row - 2), (column)) 
+                if four.is_in_objective_zone is False:
+                    four = world.map.get_cell((row - 1), (column)) 
+                    if four.is_in_objective_zone is False:
+                        four = world.map.get_cell((row + 1), (column)) 
+                        if four.is_in_objective_zone is False:
+                            four = world.map.get_cell((row + 1), (column)) 
+
+        ret = [one, two, three, four]
         return ret
 
 
