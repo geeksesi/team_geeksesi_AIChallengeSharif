@@ -26,18 +26,19 @@ class fixed:
         }
     def move_my_hero(self, world, hero, end):
         if world.current_turn < 7:
-            not_pass = []
+            ways = world.get_path_move_directions(
+                start_cell=hero.current_cell,
+                end_cell=end,
+            )
         else:                
             not_pass = self.heros_cell
             if hero.id in not_pass:
                 del not_pass[hero.id]
+            ways = world.get_path_move_directions(
+                start_cell=hero.current_cell,
+                end_cell=end,
+            )
 
-
-        ways = world.get_path_move_directions(
-            start_cell=hero.current_cell,
-            end_cell=end,
-            not_pass=not_pass.values(),
-        )
         
         if len(ways) < 1:
             # print("len is less: ", len(ways))
