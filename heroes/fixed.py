@@ -25,10 +25,12 @@ class fixed:
             ] 
         }
     def move_my_hero(self, world, hero, end):
-        
-        not_pass = self.heros_cell
-        if hero.id in not_pass:
-            del not_pass[hero.id]
+        if world.current_turn < 7:
+            not_pass = []
+        else:                
+            not_pass = self.heros_cell
+            if hero.id in not_pass:
+                del not_pass[hero.id]
 
 
         ways = world.get_path_move_directions(
@@ -77,6 +79,45 @@ class fixed:
             return hero
         else:
             return exist_enemy
+
+
+    def near_of_fucking_nemy(self, world, enemy_cell):
+        row = enemy_cell.row
+        column = enemy_cell.column
+        # we can make 9 cell but we need 3 cell :
+        one = world.map.get_cell((row - 2), (column - 2)) 
+        if one.is_in_objective_zone is False:
+            one = world.map.get_cell((row + 2), (column + 2)) 
+            if one.is_in_objective_zone is False:
+                one = world.map.get_cell((row - 1), (column - 1)) 
+                if one.is_in_objective_zone is False:
+                    one = world.map.get_cell((row + 1), (column + 1)) 
+                            
+
+        two = world.map.get_cell((row - 2), (column + 2)) 
+        if two.is_in_objective_zone is False:
+            two = world.map.get_cell((row + 2), (column - 2)) 
+            if two.is_in_objective_zone is False:
+                two = world.map.get_cell((row + 1), (column - 1)) 
+                if two.is_in_objective_zone is False:
+                    two = world.map.get_cell((row + 1), (column - 1)) 
+
+
+        three = world.map.get_cell((row), (column - 2)) 
+        if three.is_in_objective_zone is False:
+            three = world.map.get_cell((row - 2), (column)) 
+            if three.is_in_objective_zone is False:
+                three = world.map.get_cell((row), (column - 2)) 
+                if three.is_in_objective_zone is False:
+                    three = world.map.get_cell((row - 1), (column)) 
+                    if three.is_in_objective_zone is False:
+                        three = world.map.get_cell((row + 1), (column)) 
+                        if three.is_in_objective_zone is False:
+                            three = world.map.get_cell((row), (column + 1)) 
+
+        ret = [one, two, three]
+        return ret
+
 
 ### *** ## ** # * ACTION * # ** ## *** ###
 
@@ -179,43 +220,7 @@ class fixed:
             # print("{0} doed {1}".format(hero.name, ability))
             return True
 
-    def near_of_fucking_nemy(self, world, enemy_cell):
         
-        row = enemy_cell.row
-        column = enemy_cell.column
-        # we can make 9 cell but we need 3 cell :
-        one = world.map.get_cell((row - 2), (column - 2)) 
-        if one.is_in_objective_zone is False:
-            one = world.map.get_cell((row + 2), (column + 2)) 
-            if one.is_in_objective_zone is False:
-                one = world.map.get_cell((row - 1), (column - 1)) 
-                if one.is_in_objective_zone is False:
-                    one = world.map.get_cell((row + 1), (column + 1)) 
-                            
-
-        two = world.map.get_cell((row - 2), (column + 2)) 
-        if two.is_in_objective_zone is False:
-            two = world.map.get_cell((row + 2), (column - 2)) 
-            if two.is_in_objective_zone is False:
-                two = world.map.get_cell((row + 1), (column - 1)) 
-                if two.is_in_objective_zone is False:
-                    two = world.map.get_cell((row + 1), (column - 1)) 
-
-
-        three = world.map.get_cell((row), (column - 2)) 
-        if three.is_in_objective_zone is False:
-            three = world.map.get_cell((row - 2), (column)) 
-            if three.is_in_objective_zone is False:
-                three = world.map.get_cell((row), (column - 2)) 
-                if three.is_in_objective_zone is False:
-                    three = world.map.get_cell((row - 1), (column)) 
-                    if three.is_in_objective_zone is False:
-                        three = world.map.get_cell((row + 1), (column)) 
-                        if three.is_in_objective_zone is False:
-                            three = world.map.get_cell((row), (column + 1)) 
-
-        ret = [one, two, three]
-        return ret
 
 
 ### *** ## ** # * FIRST SETS * # ** ## *** ###
