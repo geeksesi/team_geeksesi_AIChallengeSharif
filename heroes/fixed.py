@@ -3,12 +3,13 @@ class fixed:
 
     def __init__(self, randint, world, Model):
         self.zone_cell = []
+        self.zone_size = {}
         self.set_zone(world)
+        self.e_cooldown = {}
         self.guardian_num = 0
         self.randint = randint
         self.heros_cell = {}
         self.Model = Model
-        self.e_cooldown = {}
         self.goal_cell = {
             "healer": self.zone_cell[0],
             "sentry": self.zone_cell[4],
@@ -79,14 +80,16 @@ class fixed:
     def set_enemy_ability(self, world):
         self.e_cooldown = {}
         for opp_hero in world.opp_heroes:
+            self.e_cooldown[opp_hero.id] = {}
             for e_ability in opp_hero.abilities:
-                self.e_cooldown[opp_hero.id][e_ability.name] += 0
+                # print(self.e_cooldown[opp_hero.id])
+                self.e_cooldown[opp_hero.id][str(e_ability.name)] = 0
         
     def turn_enemy_ability(self, world):
         for opp_hero in world.opp_heroes:
             for e_ability in opp_hero.abilities:
-                if self.e_cooldown[opp_hero.id][e_ability.name] != 0:
-                    self.e_cooldown[opp_hero.id][e_ability.name] -= 1
+                if self.e_cooldown[opp_hero.id][str(e_ability.name)] != 0:
+                    self.e_cooldown[opp_hero.id][str(e_ability.name)] -= 1
                 else: 
                     continue
 
@@ -94,20 +97,56 @@ class fixed:
         for casted in world.opp_cast_abilities:
             if world.get_hero(casted.caster_id).name is None:
                 continue
-            self.e_cooldown[casted.caster_id][casted.ability_name] +=  world.get_hero(casted.caster_id).get_ability(casted.ability_name).cooldown
+            self.e_cooldown[casted.caster_id][str(casted.ability_name)] +=  world.get_hero(casted.caster_id).get_ability(casted.ability_name).cooldown
 
 
     # like fear the walkin dead :D
-    def fear_the_fucking_enemy(self, world, hero, ability):
+    def fear_the_fucking_enemy(self, world, hero):
         # fast move for hero (with action hero can recive to zone object faster)
 
         # dodge when enemy ability is ready and attack after dodge (it's should not do more than 2/4 hero  in 1 action )
+        if hero.current_hp > 50:
+            return None
+        if hero.abilities[1].is_ready() is False:
+            return None
+        finish_point = [0,0]
         for opp_hero in world.opp_heroes:
             if opp_hero.current_cell.row == -1:
                 continue
-            if opp_hero.name == self.Model.HeroName.HEALER | opp_hero.respawn_time > 0:
+            if opp_hero.respawn_time > 0:
                 continue
-            
+            if opp_hero.name == self.Model.HeroName.HEALER:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > 5:
+                if opp_hero.name != self.Model.HeroName.BLASTER:
+                    continue
+                else:
+                    # print(self.e_cooldown[opp_hero.id])
+                    if self.e_cooldown[opp_hero.id]["AbilityName.BLASTER_BOMB"] > 0:
+                        continue
+            if self.e_cooldown[opp_hero.id][str(opp_hero.abilities[0].name)] > 0:
+                if opp_hero.name == self.Model.HeroName.guardian:
+                    continue
+                if self.e_cooldown[opp_hero.id][str(opp_hero.abilities[2].name)] > 0:
+                    continue
+            # Now this hero must jump :) 
+            while True:
+                if self.zone_cell[0].row - hero.current_cell.row > 0 :
+                    finish_point[0] = hero.current_cell.row + self.randint(0,4)
+                else:
+                    finish_point[0] = hero.current_cell.row - self.randint(0,4)
+
+                if self.zone_cell[0].column - hero.current_cell.column > 0 :
+                    finish_point[1] = hero.current_cell.column + self.randint(0,4)
+                else:
+                    finish_point[1] = hero.current_cell.column - self.randint(0,4)
+
+                if world.manhattan_distance(hero.current_cell, world.map.get_cell(finish_point[0], finish_point[1])) > hero.abilities[1].area_of_effect:
+                    continue
+                world.cast_ability(hero=hero, ability=hero.abilities[1], cell=world.map.get_cell(finish_point[0], finish_point[1]))
+                print(hero.name, "dodged")
+                break
+
 
     def attak_to_fucking_enemy(self, world, hero, ability):
         for opp_hero in world.opp_heroes:
@@ -134,9 +173,46 @@ class fixed:
                 ability_name=ability,
                 cell=exist_target.current_cell,
             )
-            print("{0} doed {1}".format(hero.name, ability))
+            # print("{0} doed {1}".format(hero.name, ability))
             return True
 
+    def near_of_fucking_nemy(self, world, enemy_cell):
+        
+        row = enemy_cell.row
+        column = enemy_cell.column
+        # we can make 9 cell but we need 3 cell :
+        one = world.map.get_cell((row - 2), (column - 2)) 
+        if one.is_in_objective_zone is False:
+            one = world.map.get_cell((row + 2), (column + 2)) 
+            if one.is_in_objective_zone is False:
+                one = world.map.get_cell((row - 1), (column - 1)) 
+                if one.is_in_objective_zone is False:
+                    one = world.map.get_cell((row + 1), (column + 1)) 
+                            
+
+        two = world.map.get_cell((row - 2), (column + 2)) 
+        if two.is_in_objective_zone is False:
+            two = world.map.get_cell((row + 2), (column - 2)) 
+            if two.is_in_objective_zone is False:
+                two = world.map.get_cell((row + 1), (column - 1)) 
+                if two.is_in_objective_zone is False:
+                    two = world.map.get_cell((row + 1), (column - 1)) 
+
+
+        three = world.map.get_cell((row), (column - 2)) 
+        if three.is_in_objective_zone is False:
+            three = world.map.get_cell((row - 2), (column)) 
+            if three.is_in_objective_zone is False:
+                three = world.map.get_cell((row), (column - 2)) 
+                if three.is_in_objective_zone is False:
+                    three = world.map.get_cell((row - 1), (column)) 
+                    if three.is_in_objective_zone is False:
+                        three = world.map.get_cell((row + 1), (column)) 
+                        if three.is_in_objective_zone is False:
+                            three = world.map.get_cell((row), (column + 1)) 
+
+        ret = [one, two, three]
+        return ret
 
 
 ### *** ## ** # * FIRST SETS * # ** ## *** ###
