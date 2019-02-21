@@ -14,28 +14,34 @@ class fixed:
             "healer": self.zone_cell[0],
             "sentry": self.zone_cell[4],
             "blaster":[    
-                self.zone_cell[(self.zone_size["row"] + 2)],
-                self.zone_cell[(self.zone_size["row"] + 1)],
                 self.zone_cell[0],
-                self.zone_cell[3],
+                self.zone_cell[1],
+                self.zone_cell[int(len(self.zone_cell))],
+                self.zone_cell[int(len(self.zone_cell)+2)],
             ],
             "guardian": [
                 self.zone_cell[0],
                 self.zone_cell[4],
             ] 
         }
+        self.is_corner = False
+
+
     def move_my_hero(self, world, hero, end):
-        
-        not_pass = self.heros_cell
-        if hero.id in not_pass:
-            del not_pass[hero.id]
+        if world.current_turn < 4:
+            ways = world.get_path_move_directions(
+                start_cell=hero.current_cell,
+                end_cell=end,
+            )
+        else:                
+            not_pass = self.heros_cell
+            if hero.id in not_pass:
+                del not_pass[hero.id]
+            ways = world.get_path_move_directions(
+                start_cell=hero.current_cell,
+                end_cell=end,
+            )
 
-
-        ways = world.get_path_move_directions(
-            start_cell=hero.current_cell,
-            end_cell=end,
-            not_pass=not_pass.values(),
-        )
         
         if len(ways) < 1:
             # print("len is less: ", len(ways))
@@ -57,26 +63,81 @@ class fixed:
         world.move_hero(hero=hero, direction=ways[0])
         self.heros_cell[hero.id] = hero.current_cell
 
-    def go_to_fucking_enemy(self, world, hero):
-        exist_enemy = None
-        for e_hero in world.opp_heroes:
-            if e_hero.current_cell.is_in_objective_zone is True:
-                if exist_enemy is None:
-                    exist_enemy = e_hero
-                    continue
-                exist_manhattan = world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
-                this_manhattan = world.manhattan_distance(hero.current_cell, e_hero.current_cell)
-                if exist_enemy.current_hp > e_hero.current_hp:
-                    if this_manhattan <= exist_manhattan | (exist_manhattan - this_manhattan) < 5:
-                        exist_enemy = e_hero
-                elif this_manhattan <= exist_manhattan:
-                    exist_enemy = e_hero
-        if exist_enemy is None:
-            return hero
-        elif world.manhattan_distance(hero.current_cell, exist_enemy.current_cell) < 5:
-            return hero
-        else:
-            return exist_enemy
+    def find_fucking_enemy(self, world, hero):
+        if self.detect_long_distance_enemy(world) is True:
+            self.goal_cell["blaster"][0] = self.zone_cell[0]
+            self.goal_cell["blaster"][1] = self.zone_cell[1]
+            self.goal_cell["blaster"][2] = self.zone_cell[len(self.zone_cell)-1]
+            self.goal_cell["blaster"][3] = self.zone_cell[len(self.zone_cell)-2]
+            return None
+        
+        ret = None
+        for opp_hero in world.opp_heroes:
+            if opp_hero.current_cell.row == -1:
+                continue
+            if opp_hero.current_cell.is_in_objective_zone is False:
+                continue
+            if ret is None:
+                ret = opp_hero
+                continue
+            if ret.current_hp < opp_hero.current_hp:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > world.manhattan_distance(hero.current_cell, ret.current_cell):
+                continue
+            ret = opp_hero
+        return ret
+
+
+
+    def near_of_fucking_nemy(self, world, enemy_cell):
+        row = enemy_cell.row
+        column = enemy_cell.column
+        # we can make 9 cell but we need 3 cell :
+        one = world.map.get_cell((row - 2), (column - 2)) 
+        if one.is_in_objective_zone is False:
+            one = world.map.get_cell((row + 2), (column + 2)) 
+            if one.is_in_objective_zone is False:
+                one = world.map.get_cell((row - 1), (column - 1)) 
+                if one.is_in_objective_zone is False:
+                    one = world.map.get_cell((row + 1), (column + 1)) 
+                            
+
+        two = world.map.get_cell((row - 2), (column + 2)) 
+        if two.is_in_objective_zone is False:
+            two = world.map.get_cell((row + 2), (column - 2)) 
+            if two.is_in_objective_zone is False:
+                two = world.map.get_cell((row + 1), (column - 1)) 
+                if two.is_in_objective_zone is False:
+                    two = world.map.get_cell((row + 1), (column - 1)) 
+
+
+        three = world.map.get_cell((row), (column - 4)) 
+        if three.is_in_objective_zone is False:
+            three = world.map.get_cell((row), (column - 3)) 
+            if three.is_in_objective_zone is False:
+                three = world.map.get_cell((row), (column - 2)) 
+                if three.is_in_objective_zone is False:
+                    three = world.map.get_cell((row), (column - 1)) 
+                    if three.is_in_objective_zone is False:
+                        three = world.map.get_cell((row), (column + 1)) 
+                        if three.is_in_objective_zone is False:
+                            three = world.map.get_cell((row), (column + 2)) 
+
+        four = world.map.get_cell((row - 4), (column)) 
+        if four.is_in_objective_zone is False:
+            four = world.map.get_cell((row- 3), (column)) 
+            if four.is_in_objective_zone is False:
+                four = world.map.get_cell((row - 2), (column)) 
+                if four.is_in_objective_zone is False:
+                    four = world.map.get_cell((row - 1), (column)) 
+                    if four.is_in_objective_zone is False:
+                        four = world.map.get_cell((row + 1), (column)) 
+                        if four.is_in_objective_zone is False:
+                            four = world.map.get_cell((row + 1), (column)) 
+
+        ret = [one, two, three, four]
+        return ret
+
 
 ### *** ## ** # * ACTION * # ** ## *** ###
 
@@ -102,9 +163,11 @@ class fixed:
                 continue
             self.e_cooldown[casted.caster_id][str(casted.ability_name)] +=  world.get_hero(casted.caster_id).get_ability(casted.ability_name).cooldown
 
-
+    #it's fucking function and don't work :( because low AP...always... i should fix move...
     # like fear the walkin dead :D
     def fear_the_fucking_enemy(self, world, hero):
+        if world.ap < 50:
+            return None
         # fast move for hero (with action hero can recive to zone object faster)
 
         # dodge when enemy ability is ready and attack after dodge (it's should not do more than 2/4 hero  in 1 action )
@@ -152,25 +215,37 @@ class fixed:
 
 
     def attak_to_fucking_enemy(self, world, hero, ability):
+        goal = None
         for opp_hero in world.opp_heroes:
-            if hero.get_ability(ability).is_ready() is not True:
-                break
             if opp_hero.current_cell.row == -1 | opp_hero.current_cell.column == -1:
                 continue
+            if goal is None:
+                goal = opp_hero
+                continue
+            if goal.current_hp < opp_hero.current_hp:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > world.manhattan_distance(hero.current_cell, goal.current_cell):
+                continue
+            goal = opp_hero
+
+        # if hero.get_ability(ability).is_ready() is not True:
+        #     return None
             targets = world.get_ability_targets(
                 ability_name=ability,
                 start_cell=hero.current_cell,
-                target_cell=opp_hero.current_cell,
+                target_cell=goal.current_cell,
             )
             exist_target = None
             for target in targets:
-                if (target.current_cell.row != -1 or target.current_cell.column != -1):
-                    if exist_target is None:
-                        exist_target = target
-                    elif exist_target.current_hp > target.current_hp:
-                        exist_target = target
+                if (target.current_cell.row == -1 or target.current_cell.column == -1):
+                    continue
+                if exist_target is None:
+                    exist_target = target
+                    continue
+                elif exist_target.current_hp > target.current_hp:
+                    exist_target = target
             if exist_target is None:
-                return None
+                continue
             world.cast_ability(
                 hero=hero,
                 ability_name=ability,
@@ -179,43 +254,7 @@ class fixed:
             # print("{0} doed {1}".format(hero.name, ability))
             return True
 
-    def near_of_fucking_nemy(self, world, enemy_cell):
         
-        row = enemy_cell.row
-        column = enemy_cell.column
-        # we can make 9 cell but we need 3 cell :
-        one = world.map.get_cell((row - 2), (column - 2)) 
-        if one.is_in_objective_zone is False:
-            one = world.map.get_cell((row + 2), (column + 2)) 
-            if one.is_in_objective_zone is False:
-                one = world.map.get_cell((row - 1), (column - 1)) 
-                if one.is_in_objective_zone is False:
-                    one = world.map.get_cell((row + 1), (column + 1)) 
-                            
-
-        two = world.map.get_cell((row - 2), (column + 2)) 
-        if two.is_in_objective_zone is False:
-            two = world.map.get_cell((row + 2), (column - 2)) 
-            if two.is_in_objective_zone is False:
-                two = world.map.get_cell((row + 1), (column - 1)) 
-                if two.is_in_objective_zone is False:
-                    two = world.map.get_cell((row + 1), (column - 1)) 
-
-
-        three = world.map.get_cell((row), (column - 2)) 
-        if three.is_in_objective_zone is False:
-            three = world.map.get_cell((row - 2), (column)) 
-            if three.is_in_objective_zone is False:
-                three = world.map.get_cell((row), (column - 2)) 
-                if three.is_in_objective_zone is False:
-                    three = world.map.get_cell((row - 1), (column)) 
-                    if three.is_in_objective_zone is False:
-                        three = world.map.get_cell((row + 1), (column)) 
-                        if three.is_in_objective_zone is False:
-                            three = world.map.get_cell((row), (column + 1)) 
-
-        ret = [one, two, three]
-        return ret
 
 
 ### *** ## ** # * FIRST SETS * # ** ## *** ###
@@ -246,3 +285,30 @@ class fixed:
             "row": last_cell["row"] - first_cell["row"],
             "column": last_cell["column"] - first_cell["column"],
         }
+
+
+
+    def detect_long_distance_enemy(self, world):
+        distance = []
+        for opp_hero in world.opp_heroes:
+            # distance[opp_hero.id] = None
+            if opp_hero.current_cell.row == -1:
+                continue
+            sum_distance = 0
+            counter = 0
+            for other_opp in world.opp_heroes:
+                counter += 1
+                if opp_hero.current_cell.row == -1:
+                    continue
+                sum_distance += world.manhattan_distance(opp_hero.current_cell, other_opp.current_cell)
+            if counter == 0:
+                continue
+            distance.append(sum_distance / counter)
+        how_much_long = 0
+        for value in distance:
+            if value > 4:
+                how_much_long += 1
+        if how_much_long > 3 :
+            return True
+        else:
+            return False
