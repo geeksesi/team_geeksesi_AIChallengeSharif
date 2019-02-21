@@ -215,25 +215,37 @@ class fixed:
 
 
     def attak_to_fucking_enemy(self, world, hero, ability):
-        if hero.get_ability(ability).is_ready() is not True:
-            return None
+        goal = None
         for opp_hero in world.opp_heroes:
             if opp_hero.current_cell.row == -1 | opp_hero.current_cell.column == -1:
                 continue
+            if goal is None:
+                goal = opp_hero
+                continue
+            if goal.current_hp < opp_hero.current_hp:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > world.manhattan_distance(hero.current_cell, goal.current_cell):
+                continue
+            goal = opp_hero
+
+        # if hero.get_ability(ability).is_ready() is not True:
+        #     return None
             targets = world.get_ability_targets(
                 ability_name=ability,
                 start_cell=hero.current_cell,
-                target_cell=opp_hero.current_cell,
+                target_cell=goal.current_cell,
             )
             exist_target = None
             for target in targets:
-                if (target.current_cell.row != -1 or target.current_cell.column != -1):
-                    if exist_target is None:
-                        exist_target = target
-                    elif exist_target.current_hp > target.current_hp:
-                        exist_target = target
+                if (target.current_cell.row == -1 or target.current_cell.column == -1):
+                    continue
+                if exist_target is None:
+                    exist_target = target
+                    continue
+                elif exist_target.current_hp > target.current_hp:
+                    exist_target = target
             if exist_target is None:
-                return None
+                continue
             world.cast_ability(
                 hero=hero,
                 ability_name=ability,
@@ -296,7 +308,7 @@ class fixed:
         for value in distance:
             if value > 4:
                 how_much_long += 1
-        if how_much_long > 2 :
+        if how_much_long > 3 :
             return True
         else:
             return False
