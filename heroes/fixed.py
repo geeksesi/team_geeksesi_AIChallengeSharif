@@ -16,8 +16,8 @@ class fixed:
             "blaster":[    
                 self.zone_cell[0],
                 self.zone_cell[1],
-                self.zone_cell[int(len(self.zone_cell))],
-                self.zone_cell[int(len(self.zone_cell)+2)],
+                self.zone_cell[int(len(self.zone_cell)-1)],
+                self.zone_cell[int(len(self.zone_cell)-22)],
             ],
             "guardian": [
                 self.zone_cell[0],
