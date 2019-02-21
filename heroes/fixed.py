@@ -14,16 +14,19 @@ class fixed:
             "healer": self.zone_cell[0],
             "sentry": self.zone_cell[4],
             "blaster":[    
-                self.zone_cell[(self.zone_size["row"] + 2)],
-                self.zone_cell[(self.zone_size["row"] + 1)],
                 self.zone_cell[0],
-                self.zone_cell[3],
+                self.zone_cell[1],
+                self.zone_cell[len(self.zone_cell)-1],
+                self.zone_cell[len(self.zone_cell)-2],
             ],
             "guardian": [
                 self.zone_cell[0],
                 self.zone_cell[4],
             ] 
         }
+        self.is_corner = False
+
+
     def move_my_hero(self, world, hero, end):
         if world.current_turn < 7:
             ways = world.get_path_move_directions(
@@ -61,6 +64,13 @@ class fixed:
         self.heros_cell[hero.id] = hero.current_cell
 
     def find_fucking_enemy(self, world, hero):
+        if self.detect_long_distance_enemy(world) is True:
+            self.goal_cell["blaster"][0] = self.zone_cell[0]
+            self.goal_cell["blaster"][1] = self.zone_cell[1]
+            self.goal_cell["blaster"][2] = self.zone_cell[len(self.zone_cell)-1]
+            self.goal_cell["blaster"][3] = self.zone_cell[len(self.zone_cell)-2]
+            return None
+        
         ret = None
         for opp_hero in world.opp_heroes:
             if opp_hero.current_cell.row == -1:
@@ -76,6 +86,8 @@ class fixed:
                 continue
             ret = opp_hero
         return ret
+
+
 
     def near_of_fucking_nemy(self, world, enemy_cell):
         row = enemy_cell.row
@@ -261,3 +273,30 @@ class fixed:
             "row": last_cell["row"] - first_cell["row"],
             "column": last_cell["column"] - first_cell["column"],
         }
+
+
+
+    def detect_long_distance_enemy(self, world):
+        distance = []
+        for opp_hero in world.opp_heroes:
+            # distance[opp_hero.id] = None
+            if opp_hero.current_cell.row == -1:
+                continue
+            sum_distance = 0
+            counter = 0
+            for other_opp in world.opp_heroes:
+                counter += 1
+                if opp_hero.current_cell.row == -1:
+                    continue
+                sum_distance += world.manhattan_distance(opp_hero.current_cell, other_opp.current_cell)
+            if counter == 0:
+                continue
+            distance.append(sum_distance / counter)
+        how_much_long = 0
+        for value in distance:
+            if value > 4:
+                how_much_long += 1
+        if how_much_long > 2 :
+            return True
+        else:
+            return False
