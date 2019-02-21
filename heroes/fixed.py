@@ -16,8 +16,8 @@ class fixed:
             "blaster":[    
                 self.zone_cell[0],
                 self.zone_cell[1],
-                self.zone_cell[int(len(self.zone_cell) / 2)],
-                self.zone_cell[int(len(self.zone_cell) / 3)],
+                self.zone_cell[int(len(self.zone_cell))],
+                self.zone_cell[int(len(self.zone_cell)+2)],
             ],
             "guardian": [
                 self.zone_cell[0],
@@ -28,7 +28,7 @@ class fixed:
 
 
     def move_my_hero(self, world, hero, end):
-        if world.current_turn < 7:
+        if world.current_turn < 4:
             ways = world.get_path_move_directions(
                 start_cell=hero.current_cell,
                 end_cell=end,
