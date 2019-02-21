@@ -60,27 +60,22 @@ class fixed:
         world.move_hero(hero=hero, direction=ways[0])
         self.heros_cell[hero.id] = hero.current_cell
 
-    def go_to_fucking_enemy(self, world, hero):
-        exist_enemy = None
-        for e_hero in world.opp_heroes:
-            if e_hero.current_cell.is_in_objective_zone is True:
-                if exist_enemy is None:
-                    exist_enemy = e_hero
-                    continue
-                exist_manhattan = world.manhattan_distance(hero.current_cell, exist_enemy.current_cell)
-                this_manhattan = world.manhattan_distance(hero.current_cell, e_hero.current_cell)
-                if exist_enemy.current_hp > e_hero.current_hp:
-                    if this_manhattan <= exist_manhattan | (exist_manhattan - this_manhattan) < 5:
-                        exist_enemy = e_hero
-                elif this_manhattan <= exist_manhattan:
-                    exist_enemy = e_hero
-        if exist_enemy is None:
-            return hero
-        elif world.manhattan_distance(hero.current_cell, exist_enemy.current_cell) < 5:
-            return hero
-        else:
-            return exist_enemy
-
+    def find_fucking_enemy(self, world, hero):
+        ret = None
+        for opp_hero in world.opp_heroes:
+            if opp_hero.current_cell.row == -1:
+                continue
+            if opp_hero.current_cell.is_in_objective_zone is False:
+                continue
+            if ret is None:
+                ret = opp_hero
+                continue
+            if ret.current_hp < opp_hero.current_hp:
+                continue
+            if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > world.manhattan_distance(hero.current_cell, ret.current_cell):
+                continue
+            ret = opp_hero
+        return ret
 
     def near_of_fucking_nemy(self, world, enemy_cell):
         row = enemy_cell.row
@@ -156,9 +151,11 @@ class fixed:
                 continue
             self.e_cooldown[casted.caster_id][str(casted.ability_name)] +=  world.get_hero(casted.caster_id).get_ability(casted.ability_name).cooldown
 
-
+    #it's fucking function and don't work :( because low AP...always... i should fix move...
     # like fear the walkin dead :D
     def fear_the_fucking_enemy(self, world, hero):
+        if world.ap < 50:
+            return None
         # fast move for hero (with action hero can recive to zone object faster)
 
         # dodge when enemy ability is ready and attack after dodge (it's should not do more than 2/4 hero  in 1 action )
@@ -206,9 +203,9 @@ class fixed:
 
 
     def attak_to_fucking_enemy(self, world, hero, ability):
+        if hero.get_ability(ability).is_ready() is not True:
+            return None
         for opp_hero in world.opp_heroes:
-            if hero.get_ability(ability).is_ready() is not True:
-                break
             if opp_hero.current_cell.row == -1 | opp_hero.current_cell.column == -1:
                 continue
             targets = world.get_ability_targets(

@@ -17,15 +17,15 @@ class blaster:
 
     def move(self, world, hero):
         self.blaster_num = 0 if self.blaster_num == 3 else (self.blaster_num + 1) 
-        opp_hero = self.find_fucking_enemy_for_attack(world, hero)
+        opp_hero = self.fixed.find_fucking_enemy(world, hero)
         if opp_hero is None:
             self.fixed.move_my_hero(world, hero, self.fixed.zone_cell[5 + int(self.blaster_num * 2)])
             return True
+        elif hero.current_cell.is_in_objective_zone is False:
+            self.fixed.move_my_hero(world, hero, self.fixed.zone_cell[5 + int(hero.id * 2)])
+            return True
         if world.manhattan_distance(hero.current_cell, opp_hero.current_cell) > 4:
             self.fixed.move_my_hero(world, hero, self.fixed.near_of_fucking_nemy(world, opp_hero.current_cell)[self.blaster_num])
-            return True
-        elif hero.current_cell.is_in_objective_zone is False:
-            self.fixed.move_my_hero(world, hero, opp_hero.current_cell)
             return True
         else:
             return None
